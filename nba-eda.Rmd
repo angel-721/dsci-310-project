@@ -1,0 +1,32 @@
+---
+title: "nba-eda"
+author: "Angel Manuel Velasquez"
+date: "2024-10-19"
+output: html_document
+---
+
+# Nba data wrangling and EDA
+
+## Load Packages and data
+```{r echo = FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+nba_stats = read.csv("./nba-stats-2002-2022.csv")
+```
+
+## Discovery
+
+```{r echo = FALSE}
+glimpse(nba_stats)
+
+# There's a lot of stats, the traditional method of grouping plays is by position which goes by Pos in the data set. Perhaps we can look into how something such as age differs by Pos groups to see if there's a pattern for each Pos to fall within a certain age
+nba_stats |> group_by(Pos) |>  summarize(mean(Age))
+
+#It seems like players that have some sort of duel role as a Center or SF tend to be older. Maybe it might be time to look at advanced metrics such as PER by pos? First, the data should be cleaned since there's NA values
+nba_stats |> group_by(Pos) |>  summarize(mean(PER))
+```
+
+
+## Data cleaning
+
+```{r echo = FALSE}
+```
