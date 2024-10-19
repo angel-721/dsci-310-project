@@ -2,7 +2,7 @@
 title: "nba-eda"
 author: "Angel Manuel Velasquez"
 date: "2024-10-19"
-output: html_document
+output: html_notebook
 ---
 
 # Nba data wrangling and EDA
@@ -29,4 +29,19 @@ nba_stats |> group_by(Pos) |>  summarize(mean(PER))
 ## Data cleaning
 
 ```{r echo = FALSE}
+
+#firstly, I'm going to omit any instance that has a NA and see how much data is loss
+na_omit_res = distinct(na_omit_res)
+na_omit_res = drop_na(na_omit_res)
+
+
+# I can see that getting rid of rows with NA keeps 99.4% of the data. This ensures that I don't lose too much of the data while keeping only instances that aren't missing any values
+nrow(na_omit_res) / nrow(nba_stats) * 100
+nba_stats_processed <- na_omit_res
+
+# Next, I'm going to omit features that hold little value when it comes to finding a classification for a NBA player
+# For now, year, name of the season/year, team of the player, minutes played, and games played will be removed
+# Later on, Pos is going to be removed since I want to make my own label that's independent of Pos to act as a new cluster
+nba_stats_processed <- nba_stats_processed |> select(-year, -year.name, -Tm, -MP, -G)
+
 ```
