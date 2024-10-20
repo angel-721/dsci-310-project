@@ -10,33 +10,38 @@ output: html_notebook
 ## Load Packages and data
 ```{r echo = FALSE}
 suppressPackageStartupMessages(library(tidyverse))
-nba_stats = read.csv("./nba-stats-2002-2022.csv")
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(gridExtra))
+suppressPackageStartupMessages(library(ggcorrplot))
+
+# Data Source: https://www.kaggle.com/datasets/owenrocchi/nba-advanced-stats-20022022
+nba_advanced_stats = read.csv("./nba-advanced-stats-2002-2022.csv")
 ```
 
 ## Discovery
 
 ```{r echo = FALSE}
-glimpse(nba_stats)
+glimpse(nba_advanced_stats)
 
 # There's a lot of stats, the traditional method of grouping plays is by position which goes by Pos in the data set. Perhaps we can look into how something such as age differs by Pos groups to see if there's a pattern for each Pos to fall within a certain age
-nba_stats |> group_by(Pos) |>  summarize(mean(Age))
+nba_advanced_stats |> group_by(Pos) |>  summarize(mean(Age))
 
 #It seems like players that have some sort of duel role as a Center or SF tend to be older. Maybe it might be time to look at advanced metrics such as PER by pos? First, the data should be cleaned since there's NA values
-nba_stats |> group_by(Pos) |>  summarize(mean(PER))
+nba_advanced_stats |> group_by(Pos) |>  summarize(mean(PER))
 ```
-
 
 ## Data cleaning
 
 ```{r echo = FALSE}
 
 #firstly, I'm going to omit any instance that has a NA and see how much data is loss
+na_omit_res = drop_na(nba_advanced_stats)
 na_omit_res = distinct(na_omit_res)
-na_omit_res = drop_na(na_omit_res)
 
 
 # I can see that getting rid of rows with NA keeps 99.4% of the data. This ensures that I don't lose too much of the data while keeping only instances that aren't missing any values
-nrow(na_omit_res) / nrow(nba_stats) * 100
+nrow(na_omit_res) / nrow(nba_advanced_stats) * 100
 nba_stats_processed <- na_omit_res
 
 # Next, I'm going to omit features that hold little value when it comes to finding a classification for a NBA player
@@ -44,4 +49,74 @@ nba_stats_processed <- na_omit_res
 # Later on, Pos is going to be removed since I want to make my own label that's independent of Pos to act as a new cluster
 nba_stats_processed <- nba_stats_processed |> select(-year, -year.name, -Tm, -MP, -G)
 
+data <- nba_stats_processed |> select(-Pos, -X)
+
+
+# Now I can exmaine the counts of each Pos. I notice that the dataset seems to consist mainly of players that are labeled under one Pos with SG being the most common Pos in the dataset.
+pos_freq_table <- nba_stats_processed |>
+     group_by(Pos) |>
+     summarize(n = n())
+
+arrange(pos_freq_table, desc(n))
 ```
+
+
+## Single Feature Visualization
+```{r echo = FALSE}
+
+# Every single feature outside of Pos. is numerical, let's examine Pos with a box plot
+nba_stats_processed |>
+  ggplot(aes(x = Pos)) +
+  geom_bar(aes(fill = Pos), color = "black") 
+
+# Create an empty list to store histograms
+hist_list <- list()
+for (col in names(data)) {
+  p <- data |> 
+    ggplot(aes(x = .data[[col]])) +  
+    geom_histogram(bins = 30, fill = "blue", color = "white") +
+    theme_minimal() +
+    labs(title = paste("Histogram of", col), x = col, y = "Count")
+  
+  hist_list[[col]] <- p
+}
+hist_grid <- grid.arrange(grobs = hist_list)  
+ggsave("histogram_grid.png", hist_grid, width = 12, height = 10, dpi = 300)
+
+# Create an empty list to store histograms
+box_list <- list()
+for (col in names(data)) {
+  p <- data |> 
+    ggplot(aes(x = .data[[col]])) +  
+    geom_boxplot()
+    theme_minimal() +
+    labs(title = paste("Histogram of", col), x = col, y = "Count")
+  
+  box_list[[col]] <- p
+}
+box_grid <- grid.arrange(grobs = box_list)  
+ggsave("box_plot_grid.png", box_grid, width = 12, height = 10, dpi = 300)
+
+```
+
+## Multi Feature Visualization
+````{r echo = FALSE}
+
+# Let's make a heatmap and save it
+
+# Create a correlation matrix
+cor_mat <- data.frame(round(cor(data), 2))
+
+ggcorrplot(cor_mat, 
+  ggtheme = ggplot2::theme_gray,
+  colors = c("#6D9EC1", "white", "#E46726"))
+
+
+```
+As you can see, here are the strongest relationships:
+- PER: TS, WS.48, OBPM, BPM
+- TS BPM, WS.48,OBPM 
+- TRB: ORB, DRB
+- OWS: WS, DWS, VORP
+- VORP, WS, and PM for have the strongest most amount of strong relationships
+ - This is mainly due to them being values that are derrived from the other features within the dataset
