@@ -103,15 +103,17 @@ ggsave("box_plot_grid.png", box_grid, width = 12, height = 10, dpi = 300)
 ````{r echo = FALSE}
 
 # Let's make a heatmap and save it
-
 # Create a correlation matrix
-cor_mat <- data.frame(round(cor(data), 2))
-
 ggcorrplot(cor_mat, 
   ggtheme = ggplot2::theme_gray,
   colors = c("#6D9EC1", "white", "#E46726"))
 
-
+ggcorrplot(cor_matrix,
+           hc.order = TRUE,
+            ggtheme = ggplot2::theme_gray,
+           type = "lower",
+           outline.color = "white",
+            colors = c("#6D9EC1", "white", "#E46726"))
 ```
 As you can see, here are the strongest relationships:
 - PER: TS, WS.48, OBPM, BPM
@@ -119,4 +121,4 @@ As you can see, here are the strongest relationships:
 - TRB: ORB, DRB
 - OWS: WS, DWS, VORP
 - VORP, WS, and PM for have the strongest most amount of strong relationships
- - This is mainly due to them being values that are derrived from the other features within the dataset
+ - This is mainly due to them being values that are derrived from the other features within the datase    t
