@@ -51,6 +51,11 @@ nba_stats_processed$weight <- as.numeric(nba_stats_processed$weight)
 # Next, I'm going to omit features that hold little value when it comes to finding a classification for a NBA player
 # For now, year, name of the season/year, team of the player, minutes played, and games played will be removed
 # Later on, Pos is going to be removed since I want to make my own label that's independent of Pos to act as a new cluster
+
+# save names for later
+names <- nba_stats_processed$year.name
+saveRDS(names, "names.rds")
+
 nba_stats_processed <- nba_stats_processed |> select(-year, -year.name, -Team, -MP, -G)
 
 data <- nba_stats_processed |> select(-Pos, -X)
