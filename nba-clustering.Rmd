@@ -26,7 +26,7 @@ names <- readRDS("names.rds")
 nba_stats_final <- nba_stats_processed |> select(-Pos)
 
 # First, define the feature columns using tidyselect helpers
-feature_columns <- c("weight", "total_inches", "DWS")
+feature_columns <- c("VORP", "DWS", "OWS")
 
 # Then create the training data using these columns
 nba_stats_final <- nba_stats_processed |> 
@@ -67,14 +67,20 @@ nba_stats_processed$name <- names
 ## Visualize it
 ```{r echo = FALSE}
 nba_stats_processed |> 
-  ggplot(aes(x=weight, y=total_inches)) +
-  geom_point(aes(color = cluster, shape = cluster), cex=3) + 
-  geom_point(data=kmCenters, aes(x=weight, y=total_inches), 
-             color="black", cex=10, shape = 18) +
-  labs(x='DWS', y='Height(inches)') +
-  theme(legend.position="none") +
-  scale_color_manual(values = c("blue", "yellow", "pink", "red"))
-
+  ggplot(aes(x=VORP, y=DWS)) +
+  geom_point(aes(color = cluster, shape = cluster), size=3) + 
+  geom_point(data=kmCenters, aes(x=VORP, y=DWS), 
+             color="black", size=10, shape = 18) +
+  geom_text(aes(label = name), 
+            size = 2, 
+            vjust = -1, 
+            check_overlap = TRUE) +
+  labs(x='Value Over Replacement Player (VORP)', 
+       y='Defensive Win Shares (DWS)', 
+       title = 'NBA Player Clustering') +
+  theme_minimal() +
+  scale_color_manual(values = c("blue", "yellow", "pink", "red"), 
+                     name = "Cluster")
 ```
 
 ```{r echo = FALSE}
