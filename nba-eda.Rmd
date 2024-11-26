@@ -16,7 +16,9 @@ suppressPackageStartupMessages(library(gridExtra))
 suppressPackageStartupMessages(library(ggcorrplot))
 
 # Data Source: https://www.kaggle.com/datasets/owenrocchi/nba-advanced-stats-20022022
-nba_advanced_stats = read.csv("./nba-advanced-stats-2002-2022.csv")
+#nba_advanced_stats = read.csv("./nba-advanced-stats-2002-2022.csv")
+nba_advanced_stats = read.csv("./nba-advanced-stats-2002-2022-adjusted.csv")
+#nba_advanced_stats = read.csv("./test-data.csv")
 ```
 
 ## Discovery
@@ -44,10 +46,14 @@ na_omit_res = distinct(na_omit_res)
 nrow(na_omit_res) / nrow(nba_advanced_stats) * 100
 nba_stats_processed <- na_omit_res
 
+# the python code may have inserted it as strings
+nba_stats_processed$total_inches <- as.numeric(nba_stats_processed$total_inches)
+nba_stats_processed$weight <- as.numeric(nba_stats_processed$weight)
+
 # Next, I'm going to omit features that hold little value when it comes to finding a classification for a NBA player
 # For now, year, name of the season/year, team of the player, minutes played, and games played will be removed
 # Later on, Pos is going to be removed since I want to make my own label that's independent of Pos to act as a new cluster
-nba_stats_processed <- nba_stats_processed |> select(-year, -year.name, -Tm, -MP, -G)
+nba_stats_processed <- nba_stats_processed |> select(-year, -year.name, -Team, -MP, -G)
 
 data <- nba_stats_processed |> select(-Pos, -X)
 
@@ -122,3 +128,10 @@ As you can see, here are the strongest relationships:
 - OWS: WS, DWS, VORP
 - VORP, WS, and PM for have the strongest most amount of strong relationships
  - This is mainly due to them being values that are derrived from the other features within the datase    t
+ 
+ 
+
+## Save processed data for later
+````{r echo = FALSE}
+saveRDS(nba_stats_processed, "nba_stats_processed.rds")
+```
