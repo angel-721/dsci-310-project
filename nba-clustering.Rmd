@@ -5,6 +5,8 @@ date: "2024-11-21"
 output: html_notebook
 ---
 
+# Clustering
+
 ## Load Packages and data
 ```{r echo = FALSE}
 suppressPackageStartupMessages(library(tidyverse))
@@ -18,8 +20,9 @@ nba_stats_processed <- readRDS("nba_stats_processed.rds")
 names <- readRDS("names.rds")
 ```
 
+## This type clustering
 
-## Process Data 
+### Process Data 
 ```{r echo = FALSE}
 
 # remove Pos. 
@@ -34,7 +37,7 @@ nba_stats_final <- nba_stats_processed |>
 
 ```
 
-## Use elbow method
+### Use elbow method
 
 ```{r echo = FALSE:w}
 WCSS <- sapply(1:7, function(k) kmeans(nba_stats_final,k)$tot.withinss)
@@ -49,22 +52,19 @@ ggplot() +
   theme(text = element_text(size = 20))
 ```
 
-## Fit a k-means model
+### Fit a k-means model
 ```{r echo = FALSE}
 kmModel <- kmeans(nba_stats_final, 4)
-kmModel
 
 nba_stats_processed$cluster <- as.factor(kmModel$cluster)
-head(nba_stats_processed)
 
 kmCenters <- as.data.frame(kmModel$centers)
-kmCenters
 nba_stats_processed$name <- names
 ```
 
 
 
-## Visualize it
+### Visualize it
 ```{r echo = FALSE}
 nba_stats_processed |> 
   ggplot(aes(x=VORP, y=DWS)) +
@@ -81,26 +81,4 @@ nba_stats_processed |>
   theme_minimal() +
   scale_color_manual(values = c("blue", "yellow", "pink", "red"), 
                      name = "Cluster")
-```
-
-```{r echo = FALSE}
-
-# Add cluster centers to each row for comparison
-nba_with_distances <- nba_stats_processed %>%
-  rowwise() %>%
-  mutate(
-    distance_to_center = sqrt(
-      sum((c_across(weight:DWS) - kmCenters[cluster, ])^2)  # Adjust column range as needed
-    )
-  )
-
-# Find the row closest to each cluster center
-closest_to_centers <- nba_with_distances %>%
-  group_by(cluster) %>%
-  slice_min(distance_to_center, n = 1)  # Get the closest row per cluster
-
-# View the results
-print(closest_to_centers$name)
-
-
 ```

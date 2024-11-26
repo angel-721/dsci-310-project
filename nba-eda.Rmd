@@ -74,7 +74,7 @@ arrange(pos_freq_table, desc(n))
 ```{r echo = FALSE}
 
 # Every single feature outside of Pos. is numerical, let's examine Pos with a box plot
-nba_stats_processed |>
+  nba_stats_processed |>
   ggplot(aes(x = Pos)) +
   geom_bar(aes(fill = Pos), color = "black") 
 
@@ -113,9 +113,13 @@ ggsave("box_plot_grid.png", box_grid, width = 12, height = 10, dpi = 300)
 
 # Let's make a heatmap and save it
 # Create a correlation matrix
-ggcorrplot(cor_mat, 
-  ggtheme = ggplot2::theme_gray,
-  colors = c("#6D9EC1", "white", "#E46726"))
+
+# Select only numerical columns for correlation
+numerical_cols <- nba_stats_processed %>% 
+  select(where(is.numeric))
+
+# Compute the correlation matrix
+cor_matrix <- cor(numerical_cols)
 
 ggcorrplot(cor_matrix,
            hc.order = TRUE,
