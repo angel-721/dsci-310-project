@@ -20,7 +20,6 @@ nba_advanced_stats = read.csv("./nba-advanced-stats-2002-2022-adjusted.csv")
 ```
 
 ## Discovery
-
 ```{r echo = FALSE}
 glimpse(nba_advanced_stats)
 
@@ -52,11 +51,15 @@ nba_stats_processed$weight <- as.numeric(nba_stats_processed$weight)
 # For now, year, name of the season/year, team of the player, minutes played, and games played will be removed
 # Later on, Pos is going to be removed since I want to make my own label that's independent of Pos to act as a new cluster
 
+# Filter so players that at least played 35 games are accounted for
+nba_stats_processed <- nba_stats_processed %>% 
+  filter(G > 35)
+
 # save names for later
 names <- nba_stats_processed$year.name
 saveRDS(names, "names.rds")
 
-nba_stats_processed <- nba_stats_processed |> select(-year, -year.name, -Team, -MP, -G)
+nba_stats_processed <- nba_stats_processed |> select(-year, -year.name, -Team)
 
 data <- nba_stats_processed |> select(-Pos, -X)
 

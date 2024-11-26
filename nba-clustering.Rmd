@@ -18,9 +18,12 @@ suppressPackageStartupMessages(library(ggcorrplot))
 # Data Source: https://www.kaggle.com/datasets/owenrocchi/nba-advanced-stats-20022022
 nba_stats_processed <- readRDS("nba_stats_processed.rds")
 names <- readRDS("names.rds")
+nba_stats_processed$name <- names
 ```
 
-## This type clustering
+## Cluster on overall advanced stats
+
+
 
 ### Process Data 
 ```{r echo = FALSE}
@@ -59,26 +62,135 @@ kmModel <- kmeans(nba_stats_final, 4)
 nba_stats_processed$cluster <- as.factor(kmModel$cluster)
 
 kmCenters <- as.data.frame(kmModel$centers)
-nba_stats_processed$name <- names
 ```
 
 
 
 ### Visualize it
 ```{r echo = FALSE}
-nba_stats_processed |> 
-  ggplot(aes(x=VORP, y=DWS)) +
-  geom_point(aes(color = cluster, shape = cluster), size=3) + 
-  geom_point(data=kmCenters, aes(x=VORP, y=DWS), 
-             color="black", size=10, shape = 18) +
-  geom_text(aes(label = name), 
+# Perform PCA
+pca_result <- prcomp(nba_stats_final, scale. = TRUE)
+
+# Calculate variance explained
+variance_explained <- pca_result$sdev^2 / sum(pca_result$sdev^2) * 100
+
+# Get the loadings (feature contributions) for PC1 and PC2
+pc1_loadings <- abs(pca_result$rotation[, 1])
+pc2_loadings <- abs(pca_result$rotation[, 2])
+
+# Sort loadings to find top contributing features
+top_pc1_features <- names(sort(pc1_loadings, decreasing = TRUE)[1:3])
+top_pc2_features <- names(sort(pc2_loadings, decreasing = TRUE)[1:3])
+
+# Create a dataframe with PCA coordinates and cluster information
+pca_df <- data.frame(
+  PC1 = pca_result$x[, 1],
+  PC2 = pca_result$x[, 2],
+  Cluster = nba_stats_processed$cluster,
+  Name = nba_stats_processed$name
+)
+
+# Plot using ggplot2
+ggplot(pca_df, aes(x = PC1, y = PC2, color = Cluster)) +
+  geom_point(alpha = 0.7) +
+  geom_text(aes(label = Name), 
             size = 2, 
             vjust = -1, 
             check_overlap = TRUE) +
-  labs(x='Value Over Replacement Player (VORP)', 
-       y='Defensive Win Shares (DWS)', 
-       title = 'NBA Player Clustering') +
   theme_minimal() +
-  scale_color_manual(values = c("blue", "yellow", "pink", "red"), 
-                     name = "Cluster")
+  labs(
+    title = sprintf(
+      "K-Means Clusters Visualized with PCA\nPC1 (%.1f%% var) Top Features: %s\nPC2 (%.1f%% var) Top Features: %s", 
+      variance_explained[1], 
+      paste(top_pc1_features, collapse = ", "),
+      variance_explained[2],
+      paste(top_pc2_features, collapse = ", ")
+    ),
+    x = "First Principal Component",
+    y = "Second Principal Component"
+  ) +
+  scale_color_brewer(palette = "Set1")
+```
+
+## Cluster on only advanced offense stats
+
+### Process Data 
+```{r echo = FALSE}
+# remove Pos. 
+nba_stats_final <- nba_stats_processed |> select(-Pos)
+# First, define the feature columns using tidyselect helpers
+feature_columns <- c("MP", "ORB.", "USG.", "OBPM", "TS.", "AST.")
+# Then create the training data using these columns
+nba_stats_final <- nba_stats_processed |> 
+  select( all_of(feature_columns))
+
+```
+
+### Use elbow method
+
+```{r echo = FALSE:w}
+WCSS <- sapply(1:7, function(k) kmeans(nba_stats_final,k)$tot.withinss)
+ggplot() +
+  geom_point(aes(x = 1:7, y = WCSS), cex = 4) +
+  geom_line(aes(x = 1:7, y = WCSS)) +
+  labs(x = "Number of clusters (k)", 
+       y = "Within-cluster sum of squares (WCSS)") +
+  theme(text = element_text(size = 20))
+```
+
+### Fit a k-means model
+```{r echo = FALSE}
+kmModel <- kmeans(nba_stats_final, 4)
+
+nba_stats_processed$cluster <- as.factor(kmModel$cluster)
+
+kmCenters <- as.data.frame(kmModel$centers)
+```
+
+
+
+### Visualize results with PCAs
+```{r echo = FALSE}
+# Perform PCA
+pca_result <- prcomp(nba_stats_final, scale. = TRUE)
+
+# Calculate variance explained
+variance_explained <- pca_result$sdev^2 / sum(pca_result$sdev^2) * 100
+
+# Get the loadings (feature contributions) for PC1 and PC2
+pc1_loadings <- abs(pca_result$rotation[, 1])
+pc2_loadings <- abs(pca_result$rotation[, 2])
+
+# Sort loadings to find top contributing features
+top_pc1_features <- names(sort(pc1_loadings, decreasing = TRUE)[1:3])
+top_pc2_features <- names(sort(pc2_loadings, decreasing = TRUE)[1:3])
+
+# Create a dataframe with PCA coordinates and cluster information
+pca_df <- data.frame(
+  PC1 = pca_result$x[, 1],
+  PC2 = pca_result$x[, 2],
+  Cluster = nba_stats_processed$cluster,
+  Name = nba_stats_processed$name
+)
+
+# Plot using ggplot2
+ggplot(pca_df, aes(x = PC1, y = PC2, color = Cluster)) +
+  geom_point(alpha = 0.7) +
+  geom_text(aes(label = Name), 
+            size = 2, 
+            vjust = -1, 
+            check_overlap = TRUE) +
+  theme_minimal() +
+  labs(
+    title = sprintf(
+      "K-Means Clusters Visualized with PCA\nPC1 (%.1f%% var) Top Features: %s\nPC2 (%.1f%% var) Top Features: %s", 
+      variance_explained[1], 
+      paste(top_pc1_features, collapse = ", "),
+      variance_explained[2],
+      paste(top_pc2_features, collapse = ", ")
+    ),
+    x = "First Principal Component",
+    y = "Second Principal Component"
+  ) +
+  scale_color_brewer(palette = "Set1")
 ```
