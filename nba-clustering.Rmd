@@ -1,0 +1,70 @@
+---
+title: "nba-clustering"
+author: "Angel Manuel Velasquez"
+date: "2024-11-21"
+output: html_notebook
+---
+
+## Load Packages and data
+```{r echo = FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(gridExtra))
+suppressPackageStartupMessages(library(ggcorrplot))
+
+# Data Source: https://www.kaggle.com/datasets/owenrocchi/nba-advanced-stats-20022022
+nba_stats_processed <- readRDS("nba_stats_processed.rds")
+```
+
+
+## Process Data 
+```{r echo = FALSE}
+
+# remove Pos. 
+nba_stats_final <- nba_stats_processed |> select(-Pos)
+nba_stats_final <- nba_stats_final |> select(total_inches, weight,  DWS)
+
+```
+
+## Use elbow method
+```{r echo = FALSE:w}
+# Fit k-means clustering with k=1,...,5 and save WCSS for each
+WCSS <- sapply(1:7, function(k) kmeans(nba_stats_final,k)$tot.withinss)
+WCSS
+
+# Plot the WCSS for each cluster
+ggplot() +
+  geom_point(aes(x = 1:7, y = WCSS), cex = 4) +
+  geom_line(aes(x = 1:7, y = WCSS)) +
+  labs(x = "Number of clusters (k)", 
+       y = "Within-cluster sum of squares (WCSS)") +
+  theme(text = element_text(size = 20))
+```
+
+## Fit a k-means model
+```{r echo = FALSE}
+kmModel <- kmeans(nba_stats_final, 4)
+kmModel
+
+nba_stats_processed$cluster <- as.factor(kmModel$cluster)
+head(nba_stats_processed)
+
+kmCenters <- as.data.frame(kmModel$centers)
+kmCenters
+```
+
+
+
+## Visualize it
+```{r echo = FALSE}
+nba_stats_processed |> 
+  ggplot(aes(x=weight, y=total_inches)) +
+  geom_point(aes(color = cluster, shape = cluster), cex=4) + 
+  geom_point(data=kmCenters, aes(x=weight, y=total_inches), 
+             color="black", cex=10, shape = 18) +
+  labs(x='DWS', y='Height(inches)') +
+  theme(legend.position="none") +
+  scale_color_manual(values = colors)
+
+```

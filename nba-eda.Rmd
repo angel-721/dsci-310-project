@@ -1,7 +1,7 @@
 ---
 title: "nba-eda"
 author: "Angel Manuel Velasquez"
-date: "2024-10-19"
+date: "2024-11-20"
 output: html_notebook
 ---
 
@@ -16,9 +16,7 @@ suppressPackageStartupMessages(library(gridExtra))
 suppressPackageStartupMessages(library(ggcorrplot))
 
 # Data Source: https://www.kaggle.com/datasets/owenrocchi/nba-advanced-stats-20022022
-#nba_advanced_stats = read.csv("./nba-advanced-stats-2002-2022.csv")
 nba_advanced_stats = read.csv("./nba-advanced-stats-2002-2022-adjusted.csv")
-#nba_advanced_stats = read.csv("./test-data.csv")
 ```
 
 ## Discovery
