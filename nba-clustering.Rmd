@@ -227,3 +227,25 @@ perform_elbow_method(nba_stats_final)
 fit_and_visualize_model(nba_stats_processed, nba_stats_final, 4)
 
 ```
+
+## Cluster with no physical stats and VORP/WS
+
+### Process Data 
+```{r echo = FALSE}
+# remove Pos. 
+nba_stats_final <- nba_stats_processed |> select(-Pos, -name)
+
+feature_columns <- c("total_inches", "weight", "WS", "VORP", "Age")
+# Then create the training data using these columns
+nba_stats_final <- nba_stats_processed |> 
+  select( all_of(feature_columns))
+  
+perform_elbow_method(nba_stats_final)
+
+```
+
+### fit after doing elbow method
+```{r echo = FALSE}
+fit_and_visualize_model(nba_stats_processed, nba_stats_final, 3)
+
+```
