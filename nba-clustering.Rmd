@@ -170,7 +170,7 @@ fit_and_visualize_model(nba_stats_processed, nba_stats_final, 4)
 # remove Pos. 
 nba_stats_final <- nba_stats_processed |> select(-Pos)
 
-feature_columns <- c( "DRB.", "STL.", "BLK.", "DWS", "DBPM")
+feature_columns <- c( "DRB.", "STL.", "BLK.", "DBPM")
 
 nba_stats_final <- nba_stats_processed |> 
   select( all_of(feature_columns))
@@ -181,7 +181,7 @@ perform_elbow_method(nba_stats_final)
 
 ### fit after doing elbow method
 ```{r echo = FALSE}
-fit_and_visualize_model(nba_stats_processed, nba_stats_final, 4)
+fit_and_visualize_model(nba_stats_processed, nba_stats_final, 3)
 ```
 
 ## Cluster on only advanced stats
@@ -203,5 +203,27 @@ perform_elbow_method(nba_stats_final)
 ### fit after doing elbow method
 ```{r echo = FALSE}
 fit_and_visualize_model(nba_stats_processed, nba_stats_final, 3)
+
+```
+
+## Cluster with no aggergate stats
+
+### Process Data 
+```{r echo = FALSE}
+# remove Pos. 
+nba_stats_final <- nba_stats_processed |> select(-Pos, -name)
+
+feature_columns <- c("TS.", "X3PAr", "FTr", "TRB.", "AST.", "STL.", "BLK.", "VORP")
+# Then create the training data using these columns
+nba_stats_final <- nba_stats_processed |> 
+  select( all_of(feature_columns))
+  
+perform_elbow_method(nba_stats_final)
+
+```
+
+### fit after doing elbow method
+```{r echo = FALSE}
+fit_and_visualize_model(nba_stats_processed, nba_stats_final, 4)
 
 ```
